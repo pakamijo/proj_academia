@@ -6,11 +6,10 @@ import pandas as pd
 
 def obtener_conexion_db():
     return mysql.connector.connect(
-        host=st.secrets["mysql"]["host"],
-        user=st.secrets["mysql"]["user"],
-        password=st.secrets["mysql"]["password"],
-        database=st.secrets["mysql"]["database"],
-        port=st.secrets["mysql"]["port"],
+        host='localhost',
+        user='secretaria',
+        password='Sec2026',
+        database='academiasComboni',
         autocommit=True
     )
 
@@ -22,9 +21,9 @@ def get_img_as_base64(file_path):
     return ""
     
 @st.cache_data
-def obtener_disciplinas_db():
+def obtener_tipos_academia_db():
     conexion = obtener_conexion_db()
-    query = "select * from disciplina"
+    query = "SELECT DISTINCT tipo FROM academia"
     
     try:
         df = pd.read_sql(query, conexion)
@@ -35,16 +34,16 @@ def obtener_disciplinas_db():
     finally:
         conexion.close()
         
-df_disciplinas = obtener_disciplinas_db()
+df_tipos_academia = obtener_tipos_academia_db()
 
-def obtener_info_docente(nombre_disciplina):
+def obtener_info_docente(tipo_academia):
     conexion = obtener_conexion_db()
     query = f"""
-        SELECT doc.nombre, doc.apellido, doc.correo, doc.telefono 
-        FROM docente as doc JOIN entrenador as ent using(id_docente)
-		    JOIN academia as a using(id_academia)
-            JOIN disciplina as dis using(id_disciplina)
-        WHERE dis.nombre = '{nombre_disciplina}'
+        SELECT d.nombre, d.apellido, d.correo, d.telefono 
+        FROM docente d 
+        JOIN impartir i ON d.id_docente = i.id_docente
+        JOIN academia a ON i.id_academia = a.id_academia
+        WHERE a.tipo = '{tipo_academia}'
         LIMIT 1
     """
     try:
@@ -57,27 +56,18 @@ def obtener_info_docente(nombre_disciplina):
     finally:
         conexion.close()
 
-def obtener_info_estudiantes(nombre_disciplina):
+def obtener_info_estudiantes(tipo_academia):
     conexion = obtener_conexion_db()
     
     query = f"""
-        SELECT est.nombre, est.correo, est.curso, aca.categoria, est.promedio
-        FROM estudiante as est 
-        JOIN academia as aca using(id_academia)
-        JOIN disciplina as dis using(id_disciplina)
-        WHERE dis.nombre = '{nombre_disciplina}'
+        SELECT e.nombres, e.apellidos, e.correo, e.curso, a.categoria, e.promedio
+        FROM estudiante as e
+        JOIN academia as a using(id_academia)
+        WHERE a.tipo = '{tipo_academia}'
     """
     try:
         df = pd.read_sql(query, conexion)
-        if not df.empty:
-            separacion = df['nombre'].str.split(' ', n=1, expand=True)
-            df['nombre'] = separacion[0]
-            df['apellido'] = separacion[1].fillna('')
-
-            columnas_ordenadas = ['nombre', 'apellido', 'correo', 'curso', 'categoria', 'promedio']
-            df = df[columnas_ordenadas]
-            return df
-        return pd.DataFrame()
+        return df
     except Exception as e:
         st.error(f"Error cargando estudiantes: {e}")
         return pd.DataFrame()
@@ -122,25 +112,25 @@ def mostrar_central():
         </div>
     """, unsafe_allow_html=True)
     
-    if df_disciplinas.empty:
-        st.info("No hay disciplinas registradas en la base de datos.")
+    if df_tipos_academia.empty:
+        st.info("No hay academias registradas en la base de datos.")
         return
     
     col1, col_academias1, col_academias2, col3 = st.columns([1,2,2,1])
 
-    for index, columna in df_disciplinas.iterrows():
-        nombre_disciplina = columna['nombre'] 
+    for index, columna in df_tipos_academia.iterrows():
+        tipo_academia = columna['tipo'] 
         
-        def seleccionar_disciplina(nombre=nombre_disciplina):
-            st.session_state['disciplina_seleccionada'] = nombre
+        def seleccionar_academia(nombre=tipo_academia):
+            st.session_state['academia_seleccionada'] = nombre
             st.session_state['pagina'] = 'detalle'
         
         if index % 2 == 0:
             with col_academias1:
-                st.button(nombre_disciplina, use_container_width=True, key=f"btn_{index}", on_click=seleccionar_disciplina)
+                st.button(tipo_academia, use_container_width=True, key=f"btn_{index}", on_click=seleccionar_academia)
         else:
             with col_academias2:
-                st.button(nombre_disciplina, use_container_width=True, key=f"btn_{index}", on_click=seleccionar_disciplina)
+                st.button(tipo_academia, use_container_width=True, key=f"btn_{index}", on_click=seleccionar_academia)
 
 
 def mostrar_footer():
@@ -181,20 +171,20 @@ def mostrar_footer():
     st.markdown('</div>', unsafe_allow_html=True)
     
     
-def mostrar_detalle_disciplina():
-    disciplina = st.session_state['disciplina_seleccionada']
+def mostrar_detalle_academia():
+    academia = st.session_state['academia_seleccionada']
     
     if st.button("← Regresar"):
         st.session_state['pagina'] = 'inicio'
         st.rerun()
 
-    col_disciplina, col_vacia , col_docente = st.columns([1, 2, 1])
+    col_academia, col_vacia , col_docente = st.columns([1, 2, 1])
    
-    with col_disciplina:
-        st.markdown(f'<h1 style="margin-bottom: 0;">{disciplina.capitalize()}</h1>', unsafe_allow_html=True)
+    with col_academia:
+        st.markdown(f'<h1 style="margin-bottom: 0;">{academia.capitalize()}</h1>', unsafe_allow_html=True)
         conexion = obtener_conexion_db()
         try:
-            query = f"select count(*) as total from estudiante e join academia a using(id_academia) join disciplina d using(id_disciplina) where d.nombre = '{disciplina}'"
+            query = f"select count(*) as total from estudiante e join academia a using(id_academia) where a.tipo = '{academia}'"
             df = pd.read_sql(query, conexion)
             total = df.iloc[0]['total']
             st.caption(f"{total} estudiantes")
@@ -204,7 +194,7 @@ def mostrar_detalle_disciplina():
             conexion.close()
         
     with col_docente:
-        datos_docente = obtener_info_docente(disciplina)
+        datos_docente = obtener_info_docente(academia)
         
         nombre_doc = "Por asignar"
         correo_doc = "---"
@@ -246,14 +236,14 @@ def mostrar_detalle_disciplina():
         with col_filtros:
             st.button("Filtros ⚙️", use_container_width=True)
 
-        df_estudiantes = obtener_info_estudiantes(disciplina)
+        df_estudiantes = obtener_info_estudiantes(academia)
 
         if df_estudiantes.empty:
-            st.info("No hay estudiantes inscritos en esta disciplina aún.")
+            st.info("No hay estudiantes inscritos en esta academia aún.")
         else:
             df_estudiantes = df_estudiantes.rename(columns={
-                "nombre": "Nombres",
-                "apellido": "Apellidos",
+                "nombres": "Nombres",
+                "apellidos": "Apellidos",
                 "correo": "Correo",
                 "curso": "Curso",
                 "categoria": "Categoría",
@@ -284,4 +274,4 @@ if st.session_state['pagina'] == 'inicio':
     st.markdown('<div style="height: 20vh;"></div>', unsafe_allow_html=True)
     mostrar_footer()
 elif st.session_state['pagina'] == 'detalle':
-    mostrar_detalle_disciplina()
+    mostrar_detalle_academia()

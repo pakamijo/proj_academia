@@ -29,4 +29,5 @@ def inyectar_css():
 
 inyectar_css()
 
-st.switch_page("pages/1_inicio.py")
+st.title("Bienvenido al Sistema de Gestión Académica")
+st.info("Seleccione una página de la barra lateral para comenzar.")

@@ -4,82 +4,15 @@ import mysql.connector
 
 def obtener_conexion_db():
     return mysql.connector.connect(
-        host=st.secrets["mysql"]["host"],
-        user=st.secrets["mysql"]["user"],
-        password=st.secrets["mysql"]["password"],
-        database=st.secrets["mysql"]["database"],
-        port=st.secrets["mysql"]["port"],
+        host='localhost',
+        user='admin_sistema',
+        password='Admin123',
+        database='academiasComboni',
         autocommit=True
     )
 
 
-def read_disciplinas():
-    conexion = obtener_conexion_db()
-    query = "SELECT * FROM disciplina"
-    
-    try:
-        df = pd.read_sql(query, conexion)
-        return df
-    except Exception as e:
-        st.error(f"Error en la consulta: {e}")
-        return pd.DataFrame
-    finally:
-        conexion.close()
-
-def create_disciplina(nombre, descripcion):
-    conexion = obtener_conexion_db()
-    query = "INSERT INTO disciplina (nombre, descripcion) VALUES (%s, %s)"
-    
-    try:
-        cursor = conexion.cursor()
-        cursor.execute(query, (nombre, descripcion))
-        st.success("Disciplina creada exitosamente")
-    except Exception as e:
-        st.error(f"Error al crear la disciplina: {e}")
-    finally:
-        conexion.close()
-
-def update_disciplina(id_disciplina, nombre, descripcion):
-    conexion = obtener_conexion_db()
-    query = "UPDATE disciplina SET nombre = %s, descripcion = %s WHERE id_disciplina = %s"
-    
-    try:
-        cursor = conexion.cursor()
-        cursor.execute(query, (nombre, descripcion, id_disciplina))
-        st.success("Disciplina actualizada exitosamente")
-    except Exception as e:
-        st.error(f"Error al actualizar la disciplina: {e}")
-    finally:
-        conexion.close()
-
-def delete_disciplina(id_disciplina):
-    conexion = obtener_conexion_db()
-    query = "DELETE FROM disciplina WHERE id_disciplina = %s"
-    
-    try:
-        cursor = conexion.cursor()
-        cursor.execute(query, (id_disciplina,))
-        st.success("Disciplina eliminada exitosamente")
-    except Exception as e:
-        st.error(f"Error al eliminar la disciplina: {e}")
-    finally:
-        conexion.close()
-
-def get_disciplina(id_disciplina):
-    conexion = obtener_conexion_db()
-    query = f"SELECT * FROM disciplina WHERE id_disciplina = {id_disciplina}"
-    
-    try:
-        df = pd.read_sql(query, conexion)
-        return df
-    except Exception as e:
-        st.error(f"Error en la consulta: {e}")
-        return pd.DataFrame
-    finally:
-        conexion.close()
-
-
-def read_docentes():
+def leer_docentes():
     conexion = obtener_conexion_db()
     query = "SELECT * FROM docente"
     
@@ -92,7 +25,7 @@ def read_docentes():
     finally:
         conexion.close()
 
-def create_docente(nombre, apellido, correo, telefono):
+def crear_docente(nombre, apellido, correo, telefono):
     conexion = obtener_conexion_db()
     query = "INSERT INTO docente (nombre, apellido, correo, telefono) VALUES (%s, %s, %s, %s)"
     
@@ -105,7 +38,7 @@ def create_docente(nombre, apellido, correo, telefono):
     finally:
         conexion.close()
 
-def update_docente(id_docente, nombre, apellido, correo, telefono):
+def actualizar_docente(id_docente, nombre, apellido, correo, telefono):
     conexion = obtener_conexion_db()
     query = "UPDATE docente SET nombre = %s, apellido = %s, correo = %s, telefono = %s WHERE id_docente = %s"
     
@@ -118,7 +51,7 @@ def update_docente(id_docente, nombre, apellido, correo, telefono):
     finally:
         conexion.close()
 
-def delete_docente(id_docente):
+def eliminar_docente(id_docente):
     conexion = obtener_conexion_db()
     query = "DELETE FROM docente WHERE id_docente = %s"
     
@@ -131,7 +64,7 @@ def delete_docente(id_docente):
     finally:
         conexion.close()
 
-def get_docente(id_docente):
+def obtener_docente(id_docente):
     conexion = obtener_conexion_db()
     query = f"SELECT * FROM docente WHERE id_docente = {id_docente}"
     
@@ -145,7 +78,7 @@ def get_docente(id_docente):
         conexion.close()
 
 
-def read_representantes():
+def leer_representantes():
     conexion = obtener_conexion_db()
     query = "SELECT * FROM representante"
     
@@ -158,7 +91,7 @@ def read_representantes():
     finally:
         conexion.close()
 
-def create_representante(nombre, telefono, correo, clausulas):
+def crear_representante(nombre, telefono, correo, clausulas):
     conexion = obtener_conexion_db()
     query = "INSERT INTO representante (nombre, telefono, correo, clausulas) VALUES (%s, %s, %s, %s)"
     
@@ -171,7 +104,7 @@ def create_representante(nombre, telefono, correo, clausulas):
     finally:
         conexion.close()
 
-def update_representante(id_representante, nombre, telefono, correo, clausulas):
+def actualizar_representante(id_representante, nombre, telefono, correo, clausulas):
     conexion = obtener_conexion_db()
     query = "UPDATE representante SET nombre = %s, telefono = %s, correo = %s, clausulas = %s WHERE id_representante = %s"
     
@@ -184,7 +117,7 @@ def update_representante(id_representante, nombre, telefono, correo, clausulas):
     finally:
         conexion.close()
 
-def delete_representante(id_representante):
+def eliminar_representante(id_representante):
     conexion = obtener_conexion_db()
     query = "DELETE FROM representante WHERE id_representante = %s"
     
@@ -198,7 +131,7 @@ def delete_representante(id_representante):
         conexion.close()
 
 
-def read_academias():
+def leer_academias():
     conexion = obtener_conexion_db()
     query = "SELECT * FROM academia"
     
@@ -211,33 +144,33 @@ def read_academias():
     finally:
         conexion.close()
 
-def create_academia(categoria, n_estudiantes, fecha_creacion, descripcion, id_disciplina, periodo):
+def crear_academia(categoria, n_estudiantes, descripcion, periodo, tipo):
     conexion = obtener_conexion_db()
-    query = "INSERT INTO academia (categoria, n_estudiantes, fecha_creacion, descripcion, id_disciplina, periodo) VALUES (%s, %s, %s, %s, %s, %s)"
+    query = "INSERT INTO academia (categoria, n_estudiantes, descripcion, periodo, tipo) VALUES (%s, %s, %s, %s, %s)"
     
     try:
         cursor = conexion.cursor()
-        cursor.execute(query, (categoria, n_estudiantes, fecha_creacion, descripcion, id_disciplina, periodo))
+        cursor.execute(query, (categoria, n_estudiantes, descripcion, periodo, tipo))
         st.success("Academia creada exitosamente")
     except Exception as e:
         st.error(f"Error al crear la academia: {e}")
     finally:
         conexion.close()
 
-def update_academia(id_academia, categoria, n_estudiantes, fecha_creacion, descripcion, id_disciplina, periodo):
+def actualizar_academia(id_academia, categoria, n_estudiantes, descripcion, periodo, tipo):
     conexion = obtener_conexion_db()
-    query = "UPDATE academia SET categoria = %s, n_estudiantes = %s, fecha_creacion = %s, descripcion = %s, id_disciplina = %s, periodo = %s WHERE id_academia = %s"
+    query = "UPDATE academia SET categoria = %s, n_estudiantes = %s, descripcion = %s, periodo = %s, tipo = %s WHERE id_academia = %s"
     
     try:
         cursor = conexion.cursor()
-        cursor.execute(query, (categoria, n_estudiantes, fecha_creacion, descripcion, id_disciplina, periodo, id_academia))
+        cursor.execute(query, (categoria, n_estudiantes, descripcion, periodo, tipo, id_academia))
         st.success("Academia actualizada exitosamente")
     except Exception as e:
         st.error(f"Error al actualizar la academia: {e}")
     finally:
         conexion.close()
 
-def delete_academia(id_academia):
+def eliminar_academia(id_academia):
     conexion = obtener_conexion_db()
     query = "DELETE FROM academia WHERE id_academia = %s"
     
@@ -251,7 +184,7 @@ def delete_academia(id_academia):
         conexion.close()
 
 
-def read_estudiantes():
+def leer_estudiantes():
     conexion = obtener_conexion_db()
     query = "SELECT * FROM estudiante"
     
@@ -264,33 +197,33 @@ def read_estudiantes():
     finally:
         conexion.close()
 
-def create_estudiante(id_representante, id_academia, nombre, promedio, fecha_nac, correo, curso, apellido):
+def crear_estudiante(id_representante, id_academia, nombres, apellidos, promedio, fecha_nac, correo, curso):
     conexion = obtener_conexion_db()
-    query = "INSERT INTO estudiante (id_representante, id_academia, nombre, promedio, fecha_nac, correo, curso, apellido) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    query = "INSERT INTO estudiante (id_representante, id_academia, nombres, apellidos, promedio, fecha_nac, correo, curso) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
     
     try:
         cursor = conexion.cursor()
-        cursor.execute(query, (id_representante, id_academia, nombre, promedio, fecha_nac, correo, curso, apellido))
+        cursor.execute(query, (id_representante, id_academia, nombres, apellidos, promedio, fecha_nac, correo, curso))
         st.success("Estudiante creado exitosamente")
     except Exception as e:
         st.error(f"Error al crear el estudiante: {e}")
     finally:
         conexion.close()
 
-def update_estudiante(id_estudiante, id_representante, id_academia, nombre, promedio, fecha_nac, correo, curso, apellido):
+def actualizar_estudiante(id_estudiante, id_representante, id_academia, nombres, apellidos, promedio, fecha_nac, correo, curso):
     conexion = obtener_conexion_db()
-    query = "UPDATE estudiante SET id_representante = %s, id_academia = %s, nombre = %s, promedio = %s, fecha_nac = %s, correo = %s, curso = %s, apellido = %s WHERE id_estudiante = %s"
+    query = "UPDATE estudiante SET id_representante = %s, id_academia = %s, nombres = %s, apellidos = %s, promedio = %s, fecha_nac = %s, correo = %s, curso = %s WHERE id_estudiante = %s"
     
     try:
         cursor = conexion.cursor()
-        cursor.execute(query, (id_representante, id_academia, nombre, promedio, fecha_nac, correo, curso, apellido, id_estudiante))
+        cursor.execute(query, (id_representante, id_academia, nombres, apellidos, promedio, fecha_nac, correo, curso, id_estudiante))
         st.success("Estudiante actualizado exitosamente")
     except Exception as e:
         st.error(f"Error al actualizar el estudiante: {e}")
     finally:
         conexion.close()
 
-def delete_estudiante(id_estudiante):
+def eliminar_estudiante(id_estudiante):
     conexion = obtener_conexion_db()
     query = "DELETE FROM estudiante WHERE id_estudiante = %s"
     
@@ -304,7 +237,7 @@ def delete_estudiante(id_estudiante):
         conexion.close()
 
 
-def read_entrenadores():
+def leer_entrenadores():
     conexion = obtener_conexion_db()
     query = "SELECT * FROM entrenador"
     
@@ -317,33 +250,33 @@ def read_entrenadores():
     finally:
         conexion.close()
 
-def create_entrenador(id_docente, id_academia):
+def crear_entrenador(id_docente, academia):
     conexion = obtener_conexion_db()
-    query = "INSERT INTO entrenador (id_docente, id_academia) VALUES (%s, %s)"
+    query = "INSERT INTO entrenador (id_docente, academia) VALUES (%s, %s)"
     
     try:
         cursor = conexion.cursor()
-        cursor.execute(query, (id_docente, id_academia))
+        cursor.execute(query, (id_docente, academia))
         st.success("Entrenador creado exitosamente")
     except Exception as e:
         st.error(f"Error al crear el entrenador: {e}")
     finally:
         conexion.close()
 
-def update_entrenador(id_entrenador, id_docente, id_academia):
+def actualizar_entrenador(id_entrenador, id_docente, academia):
     conexion = obtener_conexion_db()
-    query = "UPDATE entrenador SET id_docente = %s, id_academia = %s WHERE id_entrenador = %s"
+    query = "UPDATE entrenador SET id_docente = %s, academia = %s WHERE id_entrenador = %s"
     
     try:
         cursor = conexion.cursor()
-        cursor.execute(query, (id_docente, id_academia, id_entrenador))
+        cursor.execute(query, (id_docente, academia, id_entrenador))
         st.success("Entrenador actualizado exitosamente")
     except Exception as e:
         st.error(f"Error al actualizar el entrenador: {e}")
     finally:
         conexion.close()
 
-def delete_entrenador(id_entrenador):
+def eliminar_entrenador(id_entrenador):
     conexion = obtener_conexion_db()
     query = "DELETE FROM entrenador WHERE id_entrenador = %s"
     

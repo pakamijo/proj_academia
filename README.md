@@ -1,4 +1,4 @@
-# Grupo 7 - Proyecto SBD
+# Grupo 7 - Proyecto SBD FINAL
 ### Academia Comboni
 ![image](uepdc.png)
 * Adrian Toledo
@@ -9,7 +9,6 @@
 ![image](schema.jpg)
 
 ## Instrucciones
-* insertar el archivo `secrets.toml` en la carpeta `.streamlit`
 * instalar las dependencias de python utilizando pip:
   ```bash
   pip install -r requirements.txt
@@ -28,6 +27,8 @@
 ## Entregables
 schema: [schema_diagrama.pdf](schema_diagrama.pdf)
 
-script DDL: [script_base_de_datos.sql](script_base_de_datos.sql)
+script DDL: [poblar_base_de_datos.sql](poblar_base_de_datos.sql)
 
-manual de usuario: [manual_usuario.pdf](manual_usuario.pdf)
+script schema: [schema_base_de_datos.sql](schema_base_de_datos.sql)
+
+manual de usuario: [ManualBasesDeDatos-Grupo7](ManualBasesDeDatos-Grupo7)

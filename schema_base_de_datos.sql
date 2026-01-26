@@ -1,22 +1,21 @@
-USE academiasComboni;
+-- ==========================================================
+-- 1. CREACIÓN DE ÍNDICES 
+-- ==========================================================
 
--- ===
--- 1. CREACIÓN DE ÍNDICES
--- ===
-CREATE INDEX idx_estudiante_apellido ON estudiante(apellido);
+CREATE INDEX idx_estudiante_apellido ON estudiante(apellidos);
 CREATE INDEX idx_representante_telefono ON representante(telefono);
 CREATE INDEX idx_pago_fecha ON pago(fecha_pago);
 CREATE INDEX idx_competencia_fecha ON competencia(fecha);
-CREATE INDEX idx_docente_apellido ON docente(apellido);
+CREATE INDEX idx_docente_apellido ON docente(apellidos);
 
--- ===
--- 2. REPORTES (VISTAS)
--- ===
+-- ==========================================================
+-- 2. REPORTES / VISTAS 
+-- ==========================================================
 
 -- Reporte 1: Ficha del Estudiante
 CREATE OR REPLACE VIEW vista_ficha_estudiante AS
 SELECT 
-    E.id_estudiante, E.nombre, E.apellido, 
+    E.id_estudiante, E.nombres, E.apellidos, 
     A.categoria AS Academia, 
     R.nombre AS Representante, R.telefono
 FROM estudiante E
@@ -27,7 +26,7 @@ JOIN representante R ON E.id_representante = R.id_representante;
 CREATE OR REPLACE VIEW vista_historial_pagos AS
 SELECT 
     P.fecha_pago, R.nombre AS Pagador, 
-    A.categoria AS Academia, P.monto, P.periodo
+    A.categoria AS Academia, P.monto
 FROM pago P
 JOIN representante R ON P.id_representante = R.id_representante
 JOIN academia A ON P.id_academia = A.id_academia;
@@ -35,23 +34,25 @@ JOIN academia A ON P.id_academia = A.id_academia;
 -- Reporte 3: Resultados de Competencias
 CREATE OR REPLACE VIEW vista_competencias_disciplina AS
 SELECT 
-    C.nombre_competencia, C.fecha, 
-    A.categoria, D.nombre AS Disciplina, C.resultado
+    C.nombre AS nombre_competencia, C.fecha, 
+    A.categoria, 
+    A.tipo AS Disciplina, -- Aquí está el cambio clave
+    C.lugar
 FROM competencia C
-JOIN academia A ON C.id_academia = A.id_academia
-JOIN disciplina D ON A.id_disciplina = D.id_disciplina;
+JOIN academia A ON C.id_academia = A.id_academia;
 
 -- Reporte 4: Staff de Entrenadores
 CREATE OR REPLACE VIEW vista_asignacion_entrenadores AS
 SELECT 
-    D.nombre, D.apellido, A.categoria AS Academia, D.correo
+    D.nombre, D.apellido, 
+    En.academia AS Academia_Asignada, -- Campo de texto directo
+    D.correo
 FROM entrenador En
-JOIN docente D ON En.id_docente = D.id_docente
-JOIN academia A ON En.id_academia = A.id_academia;
+JOIN docente D ON En.id_docente = D.id_docente;
 
--- ===
+-- ==========================================================
 -- 3. TRIGGERS
--- ===
+-- ==========================================================
 DELIMITER //
 
 CREATE TRIGGER trg_incrementar_cupos
@@ -68,15 +69,15 @@ END //
 
 DELIMITER ;
 
--- ===
--- 4. PROCEDIMIENTOS ALMACENADOS (SPs) CON TRANSACCIONES
--- ===
+-- ==========================================================
+-- 4. PROCEDIMIENTOS ALMACENADOS 
+-- ==========================================================
 DELIMITER //
 
 -- Insertar Estudiante
 CREATE PROCEDURE sp_crear_estudiante(
-    IN p_id_rep INT, IN p_id_aca INT, IN p_nom VARCHAR(100), IN p_ape VARCHAR(50), 
-    IN p_prom FLOAT, IN p_nac DATE, IN p_mail VARCHAR(100), IN p_cur VARCHAR(100)
+    IN p_id_rep INT, IN p_id_aca INT, IN p_nom VARCHAR(100), IN p_ape VARCHAR(100), 
+    IN p_prom FLOAT, IN p_nac DATE, IN p_mail VARCHAR(100), IN p_cur VARCHAR(50)
 )
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -88,15 +89,15 @@ BEGIN
         IF p_prom < 0 OR p_prom > 10 THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Promedio inválido';
         END IF;
-        INSERT INTO estudiante (id_representante, id_academia, nombre, apellido, promedio, fecha_nac, correo, curso)
+        INSERT INTO estudiante (id_representante, id_academia, nombres, apellidos, promedio, fecha_nac, correo, curso)
         VALUES (p_id_rep, p_id_aca, p_nom, p_ape, p_prom, p_nac, p_mail, p_cur);
     COMMIT;
 END //
 
 -- Actualizar Estudiante
 CREATE PROCEDURE sp_actualizar_estudiante(
-    IN p_id INT, IN p_nom VARCHAR(100), IN p_ape VARCHAR(50), 
-    IN p_prom FLOAT, IN p_cur VARCHAR(100)
+    IN p_id INT, IN p_nom VARCHAR(100), IN p_ape VARCHAR(100), 
+    IN p_prom FLOAT, IN p_cur VARCHAR(50)
 )
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -105,7 +106,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al actualizar';
     END;
     START TRANSACTION;
-        UPDATE estudiante SET nombre = p_nom, apellido = p_ape, promedio = p_prom, curso = p_cur 
+        UPDATE estudiante SET nombres = p_nom, apellidos = p_ape, promedio = p_prom, curso = p_cur 
         WHERE id_estudiante = p_id;
     COMMIT;
 END //
@@ -124,9 +125,16 @@ BEGIN
 END //
 DELIMITER ;
 
--- ===
+-- ==========================================================
 -- 5. USUARIOS
--- ===
+-- ==========================================================
+-- Limpieza previa para evitar errores de duplicados
+DROP USER IF EXISTS 'admin_sistema'@'localhost';
+DROP USER IF EXISTS 'secretaria'@'localhost';
+DROP USER IF EXISTS 'rector'@'localhost';
+DROP USER IF EXISTS 'cajero'@'localhost';
+DROP USER IF EXISTS 'auditor'@'localhost';
+
 CREATE USER IF NOT EXISTS 'admin_sistema'@'localhost' IDENTIFIED BY 'Admin123';
 GRANT ALL PRIVILEGES ON academiasComboni.* TO 'admin_sistema'@'localhost';
 
